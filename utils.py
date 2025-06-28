@@ -7,9 +7,9 @@ def load_knowledge_base(path="cancer_knowledge_base.json"):
         with open(path, "r", encoding='utf-8') as f:
             return json.load(f)
     except FileNotFoundError:
-        print(f"⚠️ Knowledge base file '{path}' not found.")
+        print(f"Knowledge base file '{path}' not found.")
     except json.JSONDecodeError:
-        print(f"⚠️ Error decoding JSON from '{path}'.")
+        print(f" Error decoding JSON from '{path}'.")
 
     return {}
 
