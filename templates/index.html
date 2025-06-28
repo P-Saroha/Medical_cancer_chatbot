@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Cancer Information Chatbot</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <div class="chat-container">
+    <div class="header">
+      <h1>🏥 Cancer Information Assistant</h1>
+      <p>Your specialized guide for cancer-related information</p>
+    </div>
+
+    <div class="disclaimer">
+      ⚠️ This chatbot provides educational information only. Always consult healthcare professionals for medical advice.
+    </div>
+
+    <div class="chat-messages" id="chatMessages">
+      <div class="message bot">
+        <div class="message-content">
+          Hello! I'm your cancer information assistant. I can help you with questions about:
+          <br><br>
+          • Different types of cancer<br>
+          • Cancer symptoms and stages<br>
+          • Treatment options (chemotherapy, radiation, surgery)<br>
+          • Prevention and risk factors<br>
+          • Support resources
+          <br><br>
+          What would you like to know about cancer today?
+        </div>
+      </div>
+    </div>
+
+    <div class="typing-indicator" id="typingIndicator" style="display:none;">
+      <div class="typing-dots">
+        <span></span><span></span><span></span>
+      </div>
+    </div>
+
+    <div class="input-container">
+      <select id="languageSelect">
+        <option value="en">English</option>
+        <option value="hi">Hindi</option>
+      </select>
+
+      <div class="input-wrapper">
+        <input type="text" class="input-field" id="userInput" placeholder="Ask me about cancer..." maxlength="500">
+        <button class="mic-button" id="micButton" title="Speak">
+          <img src="{{ url_for('static', filename='mic.svg') }}" alt="Mic">
+        </button>
+      </div>
+
+      <button class="send-button" id="sendButton">Send</button>
+    </div>
+
+    <div id="listeningStatus" style="text-align:center; font-size:12px; color:#4facfe; padding-top:5px;"></div>
+  </div>
+
+  <script>
+    const sendButton = document.getElementById('sendButton');
+    const messageInput = document.getElementById('userInput');
+    const chatMessages = document.getElementById('chatMessages');
+    const typingIndicator = document.getElementById('typingIndicator');
+    const micButton = document.getElementById('micButton');
+    const langSelect = document.getElementById('languageSelect');
+    const listeningStatus = document.getElementById('listeningStatus');
+
+    sendButton.addEventListener('click', sendMessage);
+    messageInput.addEventListener('keypress', e => {
+      if (e.key === 'Enter') sendMessage();
+    });
+
+    async function sendMessage() {
+      const message = messageInput.value.trim();
+      if (!message) return;
+
+      addMessage(message, 'user');
+      messageInput.value = '';
+      sendButton.disabled = true;
+      showTyping();
+
+      try {
+        const response = await fetch("/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message })
+        });
+
+        const data = await response.json();
+        hideTyping();
+
+        if (data && data.response) {
+          addMessage(data.response, 'bot');
+        } else {
+          addMessage("❌ Sorry, I couldn't understand your question. Please try again.", 'warning');
+        }
+
+      } catch (err) {
+        hideTyping();
+        addMessage("⚠️ Error contacting server. Please try again later.", 'warning');
+        console.error(err);
+      }
+
+      sendButton.disabled = false;
+    }
+
+    function addMessage(content, type = 'bot') {
+      const messageDiv = document.createElement('div');
+      messageDiv.className = `message ${type}`;
+      const contentDiv = document.createElement('div');
+      contentDiv.className = 'message-content';
+      contentDiv.innerHTML = content;
+      messageDiv.appendChild(contentDiv);
+      chatMessages.appendChild(messageDiv);
+      scrollToBottom();
+    }
+
+    function showTyping() {
+      typingIndicator.style.display = 'block';
+      chatMessages.appendChild(typingIndicator);
+      scrollToBottom();
+    }
+
+    function hideTyping() {
+      typingIndicator.style.display = 'none';
+    }
+
+    function scrollToBottom() {
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    // 🎤 Speech-to-Text Setup
+    const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+    recognition.continuous = false;
+    recognition.interimResults = true;
+    recognition.maxAlternatives = 1;
+
+    micButton.addEventListener('click', () => {
+      messageInput.value = '';
+      const lang = langSelect.value;
+      recognition.lang = lang === 'hi' ? 'hi-IN' : 'en-US';
+      recognition.start();
+      listeningStatus.innerText = '🎤 Listening...';
+    });
+
+    recognition.onresult = function(event) {
+      const transcript = event.results[0][0].transcript;
+      messageInput.value = transcript;
+      listeningStatus.innerText = '';
+    };
+
+    recognition.onerror = function(event) {
+      if (event.error === "no-speech") {
+        alert("🎤 No speech detected. Please try again and speak clearly.");
+      } else {
+        alert("🎤 Speech recognition error: " + event.error);
+      }
+      listeningStatus.innerText = '';
+    };
+
+    recognition.onspeechend = () => {
+      recognition.stop();
+      listeningStatus.innerText = '';
+    };
+  </script>
+</body>
+</html>

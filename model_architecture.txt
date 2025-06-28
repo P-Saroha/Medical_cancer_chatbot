@@ -1,0 +1,75 @@
+ SYSTEM OVERVIEW (PIPELINE)
+ User (Browser) ──▶ Flask Web App (app.py) ──▶ MedicalChatBot ───┬──▶ Knowledge Base (JSON)
+                                                             │
+                                                             ├──▶ Intent Classifier (Bio_ClinicalBERT model)
+                                                             │
+                                                             ├──▶ Semantic Search (MiniLM SentenceTransformer)
+                                                             │
+                                                             └──▶ Gemini Medical API (Google AI)
+
+COMPONENT BREAKDOWN
+| Component                       | Purpose                               |
+| ------------------------------- | ------------------------------------- |
+| `Bio_ClinicalBERT`              | Classifies the intent of the question |
+| Knowledge Base (`.json`)        | Rule-based pattern/intent response    |
+| Semantic Search (SBERT)         | Finds the closest fuzzy match         |
+| Gemini Pro (`gemini_config.py`) | AI fallback when above methods fail   |
+
+FUNCTIONAL FLOW (WITH DECISION TREE)
+
+                             ┌────────────────────┐
+                             │   app.py (Flask)   │
+                             └────────┬───────────┘
+                                      │
+                         Receives query from user
+                                      ▼
+                        ┌────────────────────────┐
+                        │   chatbot.get_response │
+                        └────────┬───────────────┘
+                                 │
+      ┌──────────────────────────┼────────────────────────────┐
+      ▼                          ▼                            ▼
+Check: pattern match    →   Semantic similarity      →  BERT intent model
+(KB patterns)               (MiniLM, cosine sim)         (best_medical_model.pth)
+      │                          │                            │
+   If match → return    If sim > 0.7 → return         Predict → map to tag
+                          else → fallback             → KB lookup → return
+      └──────────────────────────────┬────────────────────────┘
+                                     ▼
+                           If no confident match:
+                                     ▼
+                           Call Gemini Pro API (LLM)
+                          → `gemini_config.py` handles it
+
+ FILE STRUCTURE & PURPOSE
+
+ | File / Folder                | Purpose                                      | Used In                                  |
+| ---------------------------- | -------------------------------------------- | ---------------------------------------- |
+| `model.py`                   | Contains the BERT classifier model + config  | Used in `chatbot.py`                     |
+| `cancer_knowledge_base.json` | Stores all predefined patterns and responses | Loaded in `chatbot.py`                   |
+| `best_medical_model.pth`     | Trained BERT model weights                   | Loaded in `chatbot.py`                   |
+| `idx_to_tag.pickle`          | Maps prediction index to intent/tag          | Used for intent decoding in `chatbot.py` |
+| `gemini_config.py`           | Google Gemini LLM integration                | Fallback handler in `chatbot.py`         |
+| `chatbot.py`                 | Main logic for deciding where to route query | Called by `app.py`                       |
+| `app.py`                     | Flask backend server to serve and respond    | Main entry point                         |
+| `.env`                       | Holds Gemini API key securely                | Used in `gemini_config.py`               |
+| `index.html`                 | Frontend UI for user interaction             | Rendered by Flask                        |
+| `style.css`                  | Basic chatbot UI styling                     | Linked to `index.html`                   |
+| `requirements.txt`           | List of required libraries                   | For setup/deployment                     |
+
+🧾 Summary: What You Built
+ Hybrid Medical Chatbot for Cancer Information
+ Handles structured (intent-based) and unstructured (natural language) queries
+ Uses:
+
+ Rule-based KB
+
+ Bio_ClinicalBERT intent classifier
+
+SentenceTransformer for semantic search
+
+Gemini AI fallback
+
+Flask-based backend, HTML/JS frontend
+Extensible & deployment-ready
+Smart fallback strategy for maximum answer coverage
