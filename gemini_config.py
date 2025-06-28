@@ -9,7 +9,7 @@ class MedicalResponseGenerator:
     def __init__(self):
         genai.configure(api_key=GEMINI_MEDICAL_API_KEY)
         self.model = genai.GenerativeModel(
-            model_name="models/gemini-1.5-flash-latest",  # ✅ UPDATE THIS LINE
+            model_name="models/gemini-1.5-flash-latest",  
             generation_config=self.get_generation_config(),
             safety_settings=self.get_safety_settings()
         )
@@ -46,7 +46,7 @@ class MedicalResponseGenerator:
             response = self.model.generate_content(full_prompt)
             return self.validate_response(response.text)
         except Exception as e:
-            return f"⚠️ An error occurred while generating a medical response. Please consult a medical professional\n❌ Gemini API error: {str(e)}"
+            return f"An error occurred while generating a medical response. Please consult a medical professional\n Gemini API error: {str(e)}"
 
     def validate_response(self, response: str) -> str:
         if "sorry" in response.lower() or "don't know" in response.lower():
