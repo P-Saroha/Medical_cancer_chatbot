@@ -181,11 +181,11 @@ def train():
                 patience = 0
                 if fold == 2:  # Save only fold 3 for compatibility with your app
                     torch.save(model.state_dict(), config.model_save_path)
-                    print("✅ Saved best fold3 model")
+                    print("Saved best fold3 model")
             else:
                 patience += 1
                 if patience >= config.patience:
-                    print("⛔ Early stopping")
+                    print("Early stopping")
                     break
 
 if __name__ == '__main__':
