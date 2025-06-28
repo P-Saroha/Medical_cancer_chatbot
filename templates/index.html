@@ -94,12 +94,12 @@
         if (data && data.response) {
           addMessage(data.response, 'bot');
         } else {
-          addMessage("❌ Sorry, I couldn't understand your question. Please try again.", 'warning');
+          addMessage("Sorry, I couldn't understand your question. Please try again.", 'warning');
         }
 
       } catch (err) {
         hideTyping();
-        addMessage("⚠️ Error contacting server. Please try again later.", 'warning');
+        addMessage(" Error contacting server. Please try again later.", 'warning');
         console.error(err);
       }
 
@@ -142,7 +142,7 @@
       const lang = langSelect.value;
       recognition.lang = lang === 'hi' ? 'hi-IN' : 'en-US';
       recognition.start();
-      listeningStatus.innerText = '🎤 Listening...';
+      listeningStatus.innerText = ' Listening...';
     });
 
     recognition.onresult = function(event) {
@@ -153,9 +153,9 @@
 
     recognition.onerror = function(event) {
       if (event.error === "no-speech") {
-        alert("🎤 No speech detected. Please try again and speak clearly.");
+        alert(" No speech detected. Please try again and speak clearly.");
       } else {
-        alert("🎤 Speech recognition error: " + event.error);
+        alert(" Speech recognition error: " + event.error);
       }
       listeningStatus.innerText = '';
     };
