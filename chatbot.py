@@ -95,7 +95,7 @@ class MedicalChatBot:
             sims = cosine_similarity(query_emb, self.pattern_embeddings)[0]
             best_idx = np.argmax(sims)
             best_score = sims[best_idx]
-            print(f"🧠 Semantic similarity score: {best_score:.2f} for '{query}'")
+            print(f"Semantic similarity score: {best_score:.2f} for '{query}'")
             if best_score > 0.85:
                 pattern = self.all_patterns[best_idx]
                 entry = self.pattern_to_entry[pattern]
