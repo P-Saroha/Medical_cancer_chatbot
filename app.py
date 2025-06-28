@@ -15,7 +15,7 @@ CORS(app)
 try:
     chatbot = MedicalChatBot()
 except Exception as e:
-    print(f"❌ Failed to initialize chatbot: {e}")
+    print(f" Failed to initialize chatbot: {e}")
     chatbot = None
 
 # Input validation
@@ -80,7 +80,7 @@ def chat():
             })
 
     except Exception as e:
-        print("❌ Error in /chat route:", str(e))
+        print("Error in /chat route:", str(e))
         return jsonify({
             "error": "An internal error occurred.",
             "message": str(e)
@@ -88,5 +88,5 @@ def chat():
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
-    print(f"🚀 Running on http://127.0.0.1:{port}")
+    print(f" Running on http://127.0.0.1:{port}")
     app.run(host='0.0.0.0', port=port, debug=True)
