@@ -18,9 +18,9 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 class MedicalChatBot:
-    def __init__(self, 
+    def __init__(self,
                  kb_path: str = "cancer_knowledge_base.json",
-                 model_path: str = "best_medical_model.pth",
+                 model_path: str = "fold3_best_model.pth",
                  tag_mappings_path: str = "idx2tag.pickle"):
         self.kb_path = kb_path
         self.model_path = model_path
@@ -88,7 +88,11 @@ class MedicalChatBot:
     def get_kb_response(self, query: str) -> Optional[Dict]:
         for pattern, entry in self.pattern_to_entry.items():
             if pattern.lower() in query.lower():
-                return {"answer": entry['answer'], "source": "knowledge_base", "confidence": 1.0}
+                return {
+                    "answer": entry['answer'],
+                    "source": "knowledge_base",
+                    "confidence": 1.0
+                }
 
         if hasattr(self, 'semantic_model'):
             query_emb = self.semantic_model.encode([query])
@@ -96,19 +100,43 @@ class MedicalChatBot:
             best_idx = np.argmax(sims)
             best_score = sims[best_idx]
             print(f"Semantic similarity score: {best_score:.2f} for '{query}'")
+
             if best_score > 0.85:
                 pattern = self.all_patterns[best_idx]
                 entry = self.pattern_to_entry[pattern]
-                return {"answer": entry['answer'], "source": "semantic_search", "confidence": best_score}
+                return {
+                    "answer": entry['answer'],
+                    "source": "semantic_search",
+                    "confidence": best_score
+                }
 
         return None
+
+    def predict_intent_with_bert(self, query: str) -> Optional[str]:
+        try:
+            self.intent_model.eval()
+            inputs = self.tokenizer(
+                query,
+                return_tensors='pt',
+                truncation=True,
+                padding='max_length',
+                max_length=128
+            ).to(self.device)
+
+            with torch.no_grad():
+                output = self.intent_model(inputs['input_ids'], inputs['attention_mask'])
+                pred = torch.argmax(output, dim=1).item()
+                return self.idx_to_tag.get(pred, None)
+        except Exception as e:
+            logger.error(f"Error in BERT-based intent prediction: {e}")
+            return None
 
     def get_gemini_response(self, query: str) -> str:
         return generate_medical_response(query)
 
     def get_response(self, query: str, show_debug: bool = False) -> str:
         if not self.is_medical_question(query):
-            return ("I'm specialized in cancer and medical topics. Please ask something related to cancer, treatment, symptoms, or diagnosis.")
+            return "I'm specialized in cancer and medical topics. Please ask something related to cancer, treatment, symptoms, or diagnosis."
 
         kb_result = self.get_kb_response(query)
         if kb_result:
@@ -116,6 +144,12 @@ class MedicalChatBot:
             if show_debug:
                 response += f"\n\n[Source: {kb_result['source']} | Confidence: {kb_result['confidence']:.2f}]"
             return response
+
+        predicted_tag = self.predict_intent_with_bert(query)
+        if predicted_tag:
+            for entry in self.kb_entries:
+                if entry['tag'] == predicted_tag:
+                    return entry['answer']
 
         gemini_response = self.get_gemini_response(query)
         if show_debug:

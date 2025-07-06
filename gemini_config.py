@@ -32,13 +32,12 @@ class MedicalResponseGenerator:
     def generate_response(self, prompt: str, context: str = "") -> str:
         try:
             full_prompt = (
-                f"Context: {context}\n\n"
+                
                 f"Question: {prompt}\n\n"
                 "Requirements:\n"
                "Instructions:\n"
                 "- Answer in 3–4 sentences only\n"
                 "- Be medically accurate and concise\n"
-                "- Focus only on cancer-related facts\n"
                 "- Avoid unnecessary background or repetition\n"
                 "- If unsure, suggest consulting a doctor"
 
@@ -56,5 +55,12 @@ class MedicalResponseGenerator:
 # Singleton usage
 medical_response_generator = MedicalResponseGenerator()
 
-def generate_medical_response(prompt: str, context: str = "") -> str:
-    return medical_response_generator.generate_response(prompt, context)
+def generate_medical_response(prompt: str, context: str = "", language: str = "en") -> str:
+    """Generate medical response with language support"""
+    if language == "hi":
+        system_prompt = f"{context} हिंदी में जवाब दें। चिकित्सकीय रूप से सटीक जानकारी प्रदान करें। कैंसर से संबंधित प्रतिक्रियाओं को प्राथमिकता दें, लेकिन यदि स्पष्ट रूप से चिकित्सा संबंधी लक्षण हों तो अन्य तत्काल लक्षणों पर ध्यान दें।"
+    else:
+        system_prompt = f"{context} Provide medically accurate information. Prioritize cancer-related responses, but address other urgent symptoms if clearly medical."
+
+    
+    return medical_response_generator.generate_response(system_prompt, context)
